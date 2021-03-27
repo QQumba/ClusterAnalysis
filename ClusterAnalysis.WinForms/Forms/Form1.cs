@@ -11,8 +11,9 @@ namespace ClusterAnalysis.WinForms.Forms
     {
         private readonly int _width = 800;
         private readonly int _height = 800;
+        private int _scale = 80;
         
-        private DataPoint[] _points;
+        private DataPoint[] _points = new DataPoint[Values.PointsCount];
         private Cluster[] _clusters;
         
         private readonly Color[] _colors = {Color.OrangeRed, Color.LawnGreen, Color.Magenta, Color.Bisque, Color.Aqua, Color.Coral, Color.Yellow,  };
@@ -48,9 +49,11 @@ namespace ClusterAnalysis.WinForms.Forms
             };
             _clusterizeButton.Click += async (sender, args) =>
             {
-                Clusterize(sender, args);
-                DrawPoints(sender, args);
-                // await Task.Delay(200);
+                for (int i = 0; i < 20; i++)
+                {
+                    Clusterize(sender, args);
+                    DrawPoints(sender, args);
+                }
             };
 
             this.Size = new Size(_width, _height + 200);
@@ -63,9 +66,10 @@ namespace ClusterAnalysis.WinForms.Forms
         }
         private void InitializeData()
         {
-            _points = GeneratePoints(Values.PointsCount);
+
+            _points = GeneratePoints();
             _clusters = new Cluster[Values.ClustersCount];
-            var clusterCenters = GeneratePoints(Values.ClustersCount);
+            var clusterCenters = GenerateClusterCenters();
             for (int i = 0; i < _clusters.Length; i++)
             {
                 _clusters[i] = new Cluster(clusterCenters[i], _colors[i]);
@@ -86,8 +90,8 @@ namespace ClusterAnalysis.WinForms.Forms
             foreach (var cluster in _clusters)
             {
                 g.FillRectangle(new SolidBrush(cluster.Color),
-                    cluster.Center.X * 200 + bitmap.Width / 2,
-                    cluster.Center.Y * 200 + bitmap.Height / 2,
+                    cluster.Center.X * _scale + bitmap.Width / 2,
+                    cluster.Center.Y * _scale + bitmap.Height / 2,
                     9, 
                     9);
             }
@@ -95,8 +99,8 @@ namespace ClusterAnalysis.WinForms.Forms
             foreach (var point in _points)
             {
                 g.FillRectangle(new SolidBrush(point.Cluster?.Color ?? Color.White),
-                    point.X * 200 + bitmap.Width / 2,
-                    point.Y * 200 + bitmap.Height / 2,
+                    point.X * _scale + bitmap.Width / 2,
+                    point.Y * _scale + bitmap.Height / 2,
                     3,
                     3);
             }
@@ -117,10 +121,20 @@ namespace ClusterAnalysis.WinForms.Forms
             }
         }
 
-        private DataPoint[] GeneratePoints(int count)
+        private DataPoint[] GenerateClusterCenters()
         {
             var generator = new Generator();
-            return generator.GeneratePoints(count);
+            return generator.GeneratePoints(Values.ClustersCount, Values.StandardDeviation);
+        }
+
+        private DataPoint[] GeneratePoints()
+        {
+            var generator = new Generator();
+            return generator.GenerateClustersPoints(
+                Values.PointsCount,
+                Values.ClustersCount,
+                Values.StandardDeviation,
+                Values.ClusterStandardDeviation);
         }
     }
 }
